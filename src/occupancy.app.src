@@ -1,0 +1,16 @@
+{application, occupancy, [
+    {description, "Occupancy Meter Backend Applicatie"},
+    {vsn, "1.0.0"},
+    {registered, []},
+    {mod, {occupancy_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        cowboy
+    ]},
+    {env,[]},
+    {modules, []},
+
+    {licenses, ["Apache 2.0"]},
+    {links, []}
+]}.
