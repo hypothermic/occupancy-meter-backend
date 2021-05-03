@@ -6,7 +6,20 @@
     stop/1
 ]).
 
+% -----------------------------------------------------------------------------
+% HTTP_PORT
+%
+% 	Constante met de poort waarop de HTTP server moet runnen
+% -----------------------------------------------------------------------------
+
 -define(HTTP_PORT, 8080).
+
+
+% -----------------------------------------------------------------------------
+% start
+%
+% 	Functie die wordt uitgevoerd wanneer de applicatie wordt gestart
+% -----------------------------------------------------------------------------
 
 start(_StartType, _StartArgs) ->
     logger:debug("Mnesia aan het configureren...."),
@@ -17,7 +30,8 @@ start(_StartType, _StartArgs) ->
 
     Routes = cowboy_router:compile([
         {'_', [
-            {"/camera", occupancy_camera_list_handler, []}
+            {"/camera", occupancy_camera_list_handler, []},
+            {"/camera/new", occupancy_camera_new_handler, []}
         ]}
     ]),
 
@@ -32,6 +46,13 @@ start(_StartType, _StartArgs) ->
     logger:debug("OK"),
 
     occupancy_sup:start_link().
+
+
+% -----------------------------------------------------------------------------
+% stop
+%
+% 	Functie die wordt aangeroepen wanneer de server wordt gestopt
+% -----------------------------------------------------------------------------
 
 stop(_State) ->
     ok.
