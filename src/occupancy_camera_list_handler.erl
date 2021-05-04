@@ -35,7 +35,7 @@ allowed_methods(Req, State) ->
 % content_types_provided functie
 %
 % 	Hierin geven we mee welke functies welke HTTP content types accepteren
-% 	Bijvoorbeeld, return_json accepteert application/json content type
+% 	Bijvoorbeeld, return_json returnt application/json content type
 % -----------------------------------------------------------------------------
 
 content_types_provided(Req, State) ->

@@ -3,10 +3,13 @@
 -export([
 	setup/0,
 
-	get_all_cameras/0
+	get_all_cameras/0,
+	create_camera/1,
+	camera_exists/1
 ]).
 
 -include("occupancy_database.hrl").
+-include_lib("stdlib/include/ms_transform.hrl").
 
 % -----------------------------------------------------------------------------
 % setup functie
@@ -78,3 +81,25 @@ get_all_cameras() ->
 	{atomic, Cameras} = mnesia:transaction(Query),
 
 	Cameras.
+
+create_camera(CameraEntry = #occupancy_camera_entry{}) ->
+	Query = fun() -> mnesia:write(CameraEntry) end,
+
+	{atomic, ok} = mnesia:transaction(Query),
+
+	ok.
+
+camera_exists(CameraName) ->
+	% Als er een record met de camera naam CameraName bestaat, return true
+	Query = fun() ->
+		case mnesia:read(occupancy_camera_entry, CameraName) of
+			[#occupancy_camera_entry{} = _CameraEntry] ->
+				true;
+			[] ->
+				false
+		end
+	end,
+
+	{atomic, Exists} = mnesia:transaction(Query),
+
+	Exists.
