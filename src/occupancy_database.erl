@@ -63,12 +63,10 @@ create_cameras_table() ->
 	]).
 
 insert_sample_data() ->
-	DemoCamera1 = #occupancy_camera_entry{name = "My Sample Camera 1", vps_ip_address = "192.168.0.85", cam_ip_address = "192.168.0.86"},
-	DemoCamera2 = #occupancy_camera_entry{name = "My Sample Camera 2", vps_ip_address = "192.168.0.85", cam_ip_address = "192.168.0.87"},
+	DemoCamera = #occupancy_camera_entry{name = "Demo camera 1", vps_ip_address = "192.168.0.80", cam_ip_address = "192.168.0.79"},
 
 	Query = fun() ->
-		mnesia:write(DemoCamera1),
-		mnesia:write(DemoCamera2)
+		mnesia:write(DemoCamera)
 	end,
 
 	mnesia:transaction(Query),

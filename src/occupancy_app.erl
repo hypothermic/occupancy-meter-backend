@@ -24,6 +24,12 @@
 start(_StartType, _StartArgs) ->
     logger:debug("Mnesia aan het configureren...."),
     occupancy_database:setup(),
+    application:ensure_started(mnesia),
+
+    logger:debug("Camera's aanmaken...."),
+    lists:foreach(fun(Camera) ->
+        occupancy_camera:start_link(Camera)
+    end, occupancy_database:get_all_cameras()),
 
     logger:debug("REST API starten...."),
     application:ensure_all_started([cowboy, ranch, cowlib]),
