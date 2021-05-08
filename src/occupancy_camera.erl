@@ -16,8 +16,9 @@
 -include("occupancy_database.hrl").
 
 -record(occupancy_camera_state, {
-    camera_entry :: #occupancy_camera_entry{},
-    socket       :: term()
+    camera_entry 		:: #occupancy_camera_entry{},
+    socket       		:: term(),
+	remaining	= <<>>	:: binary()
 }).
 
 start_link(#occupancy_camera_entry{} = CameraEntry) ->
@@ -27,16 +28,14 @@ init([CameraEntry = #occupancy_camera_entry{vps_ip_address = VpsIp, cam_ip_addre
 
     % Verbind met de VPS via een socket. Het python script op de VPS accept de socket.
     {ok, Socket} = gen_tcp:connect(VpsIp, 40001, [binary, {packet, 0}]),
+
+	% Stuur een packet1, met het IP-adres van de camera
     ok = gen_tcp:send(Socket,
 		<<
 			1:8/unsigned-integer,
 			(length(CamIp))/unsigned-integer,
 			(list_to_binary(CamIp))/binary
 		>>),
-
-	{ok, Command} = gen_tcp:recv(Socket, 1), //////// TODO
-
-    % TODO receive statistieken van VPS
 
 	{ok, #occupancy_camera_state{camera_entry = CameraEntry, socket = Socket}}.
 
@@ -46,11 +45,41 @@ handle_call(_Request, _From, State = #occupancy_camera_state{}) ->
 handle_cast(_Request, State = #occupancy_camera_state{}) ->
 	{noreply, State}.
 
-handle_info(_Info, State = #occupancy_camera_state{}) ->
-	{noreply, State}.
+handle_info(Info, State = #occupancy_camera_state{}) ->
+	case Info of
+		{tcp_closed, _} ->
+			{stop, State};
+
+		{tcp, _, Data} when is_binary(Data) ->
+			NewState = handle_data(Data, State),
+			{noreply, NewState};
+
+		(_) ->
+			{noreply, State}
+	end.
 
 terminate(_Reason, _State = #occupancy_camera_state{}) ->
 	ok.
 
 code_change(_OldVsn, State = #occupancy_camera_state{}, _Extra) ->
 	{ok, State}.
+
+handle_data(Data, State = #occupancy_camera_state{camera_entry = CameraEntry, remaining = RemainingData}) ->
+	<<CommandId:8/unsigned-integer, Rest/binary>> = <<RemainingData/binary, Data/binary>>,
+
+	case CommandId of
+		4 ->
+			% Lees het getal uit de data
+			<<PeopleAmount:8/unsigned-integer, Rest2/binary>> = Rest,
+			logger:warning("Received updated people amount ~p", [PeopleAmount]),
+
+			% Sla dit getal op in de database
+			{atomic, ok} = mnesia:transaction(fun() ->
+				EntryKey = #occupancy_history_key{camera = CameraEntry, timestamp = erlang:system_time()},
+				mnesia:write(#occupancy_history_entry{key = EntryKey, people_amount = PeopleAmount})
+			end),
+			State#occupancy_camera_state{remaining = Rest2};
+
+		_ ->
+			State#occupancy_camera_state{remaining = Rest}
+	end.

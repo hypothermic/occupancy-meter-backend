@@ -5,7 +5,9 @@
 
 	get_all_cameras/0,
 	create_camera/1,
-	camera_exists/1
+	camera_exists/1,
+
+	get_all_histories/0
 ]).
 
 -include("occupancy_database.hrl").
@@ -32,7 +34,7 @@ setup() ->
 	application:ensure_started(mnesia),
 	mnesia:system_info(),
 
-	% Maak de camera's tabel aan (gekoppeld aan het record "occupancy_camera")
+	% Maak de camera's tabel aan (gekoppeld aan het record "occupancy_camera_entry")
 	ok = case create_cameras_table() of
 		{atomic, ok} -> % aanmaken is successvol
 			insert_sample_data();
@@ -40,8 +42,16 @@ setup() ->
 			ok
 	end,
 
+	% Maak de history tabel aan (gekoppeld aan het record "occupancy_history_entry")
+	ok = case create_history_table() of
+		{atomic, ok} -> % aanmaken is successvol
+			ok;
+		{aborted, {already_exists, occupancy_history_entry}} -> % het tabel bestaat al, dit is prima
+			ok
+	end,
+
 	% Wacht totdat de tabellen aangemaakt zijn
-	case mnesia:wait_for_tables([occupancy_camera_entry], 1000) of
+	case mnesia:wait_for_tables([occupancy_camera_entry, occupancy_history_entry], 1000) of
 		{timeout, _} ->
 			error;
 		(_)->
@@ -62,6 +72,14 @@ create_cameras_table() ->
 		{disc_copies, [node()]}
 	]).
 
+create_history_table() ->
+	mnesia:create_table(occupancy_history_entry, [
+		{type, set},
+		{record_name, occupancy_history_entry},
+		{attributes, record_info(fields, occupancy_history_entry)},
+		{disc_copies, [node()]}
+	]).
+
 insert_sample_data() ->
 	DemoCamera = #occupancy_camera_entry{name = "Demo camera 1", vps_ip_address = "192.168.0.80", cam_ip_address = "192.168.0.79"},
 
@@ -79,6 +97,13 @@ get_all_cameras() ->
 	{atomic, Cameras} = mnesia:transaction(Query),
 
 	Cameras.
+
+get_all_histories() ->
+	Query = fun() -> mnesia:select(occupancy_history_entry, [{'_',[],['$_']}]) end,
+
+	{atomic, Histories} = mnesia:transaction(Query),
+
+	Histories.
 
 create_camera(CameraEntry = #occupancy_camera_entry{}) ->
 	Query = fun() -> mnesia:write(CameraEntry) end,
