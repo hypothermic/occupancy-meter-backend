@@ -1,4 +1,4 @@
--module(occupancy_camera_create_handler).
+-module(occupancy_rest_camera_create_handler).
 -behavior(cowboy_rest).
 
 %% API

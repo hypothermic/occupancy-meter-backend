@@ -1,4 +1,4 @@
--module(occupancy_camera_list_handler).
+-module(occupancy_rest_history_list_handler).
 -behavior(cowboy_rest).
 
 -export([
@@ -51,15 +51,16 @@ content_types_provided(Req, State) ->
 % -----------------------------------------------------------------------------
 
 return_json(Req, State) ->
-	% Verkrijg alle camera info's uit de database en zet ze om naar JSON formaat
-	Message = lists:foldl(fun(_Camera = #occupancy_camera_entry{name = Name, vps_ip_address = VpsIp, cam_ip_address = CamIp}, List) ->
-		CameraJson = {[
-			{name, list_to_binary(Name)},
-			{vps_ip, list_to_binary(VpsIp)},
-			{cam_ip, list_to_binary(CamIp)}
+	% Verkrijg alle history entries uit de database en zet ze om naar JSON formaat
+	Message = lists:foldl(fun(_Point = #occupancy_history_entry{key = Key, people_amount = PeopleAmount}, List) ->
+		PointJson = {[
+			{time,   Key#occupancy_history_key.timestamp},
+			{amount, PeopleAmount}
 		]},
 
-		[CameraJson|List]
-	end, [], occupancy_database:get_all_cameras()),
+		[PointJson|List]
+	end, [], occupancy_database:get_history_for_camera(binary_to_list(cowboy_req:binding(camera, Req)))),
+
+	logger:warning("RQ: ~p", [cowboy_req:binding(camera, Req)]),
 
 	{jiffy:encode(Message), Req, State}.

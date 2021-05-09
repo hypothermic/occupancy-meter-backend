@@ -7,7 +7,8 @@
 	create_camera/1,
 	camera_exists/1,
 
-	get_all_histories/0
+	get_all_histories/0,
+	get_history_for_camera/1
 ]).
 
 -include("occupancy_database.hrl").
@@ -104,6 +105,21 @@ get_all_histories() ->
 	{atomic, Histories} = mnesia:transaction(Query),
 
 	Histories.
+
+get_history_for_camera(Camera) ->
+	% Patroon voor welke eisen we stellen aan de return records (WHERE commando in SQL)
+	Pattern = #occupancy_history_entry{
+		key = #occupancy_history_key{camera = #occupancy_camera_entry{name = Camera, cam_ip_address = '_', vps_ip_address = '_'}, timestamp = '_'},
+		people_amount = '_'
+	},
+
+	Query = fun() ->
+		mnesia:match_object(Pattern)
+	end,
+
+	{atomic, History} = mnesia:transaction(Query),
+
+	History.
 
 create_camera(CameraEntry = #occupancy_camera_entry{}) ->
 	Query = fun() -> mnesia:write(CameraEntry) end,

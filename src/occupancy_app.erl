@@ -36,8 +36,9 @@ start(_StartType, _StartArgs) ->
 
     Routes = cowboy_router:compile([
         {'_', [
-            {"/camera", occupancy_camera_list_handler, []},
-            {"/camera/new", occupancy_camera_create_handler, []}
+            {"/camera",          occupancy_rest_camera_list_handler,   []},
+            {"/camera/new",      occupancy_rest_camera_create_handler, []},
+            {"/history/:camera", occupancy_rest_history_list_handler,  []}
         ]}
     ]),
 
