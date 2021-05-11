@@ -92,26 +92,23 @@ resource_exists(Req, State) ->
 % -----------------------------------------------------------------------------
 
 accept_json(Req, Decoded) ->
-	logger:warning("accept ~p", [Decoded]),
-	%try
-		% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
-		Name = maps:get(<<"name">>, Decoded),
-		VpsIp = maps:get(<<"vps_ip">>, Decoded),
-		CamIp = maps:get(<<"cam_ip">>, Decoded),
+	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
+	Name = maps:get(<<"name">>, Decoded),
+	VpsIp = maps:get(<<"vps_ip">>, Decoded),
+	CamIp = maps:get(<<"cam_ip">>, Decoded),
 
-		% Maak een database entry van de bovenstaande variabelen
-		Entry = #occupancy_camera_entry{
-			name			= binary_to_list(Name),
-			vps_ip_address	= binary_to_list(VpsIp),
-			cam_ip_address	= binary_to_list(CamIp)
-		},
+	% Maak een database entry van de bovenstaande variabelen
+	Entry = #occupancy_camera_entry{
+		name = binary_to_list(Name),
+		vps_ip_address = binary_to_list(VpsIp),
+		cam_ip_address = binary_to_list(CamIp)
+	},
 
-		% Geef de entry door naar de database module
-		occupancy_database:create_camera(Entry),
+	% Geef de entry door naar de database module
+	occupancy_database:create_camera(Entry),
 
-		% Return success=true
-		{{true, "/camera/" ++ Name}, Req, undefined}.
-	%catch
-	%    _:_  ->
-	%		{false, Req, undefined}
-	%end.
+	% Start de camera
+	occupancy_camera:start_link(Entry),
+
+	% Return success=true
+	{{true, "/camera/" ++ Name}, Req, undefined}.

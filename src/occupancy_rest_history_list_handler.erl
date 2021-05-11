@@ -61,6 +61,4 @@ return_json(Req, State) ->
 		[PointJson|List]
 	end, [], occupancy_database:get_history_for_camera(binary_to_list(cowboy_req:binding(camera, Req)))),
 
-	logger:warning("RQ: ~p", [cowboy_req:binding(camera, Req)]),
-
 	{jiffy:encode(Message), Req, State}.

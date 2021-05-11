@@ -71,7 +71,6 @@ handle_data(Data, State = #occupancy_camera_state{camera_entry = CameraEntry, re
 		4 ->
 			% Lees het getal uit de data
 			<<PeopleAmount:8/unsigned-integer, Rest2/binary>> = Rest,
-			logger:warning("Received updated people amount ~p", [PeopleAmount]),
 
 			% Sla dit getal op in de database
 			{atomic, ok} = mnesia:transaction(fun() ->
