@@ -37,8 +37,8 @@ setup() ->
 
 	% Maak de camera's tabel aan (gekoppeld aan het record "occupancy_camera_entry")
 	ok = case create_cameras_table() of
-		{atomic, ok} -> % aanmaken is successvol
-			insert_sample_data();
+		{atomic, Result} -> % aanmaken is successvol
+			Result;
 		{aborted, {already_exists, occupancy_camera_entry}} -> % het tabel bestaat al, dit is prima
 			ok
 	end,
@@ -81,15 +81,6 @@ create_history_table() ->
 		{disc_copies, [node()]}
 	]).
 
-insert_sample_data() ->
-	DemoCamera = #occupancy_camera_entry{name = "Demo camera 1", vps_ip_address = "192.168.0.80", cam_ip_address = "192.168.0.79"},
-
-	Query = fun() ->
-		mnesia:write(DemoCamera)
-	end,
-
-	mnesia:transaction(Query),
-	ok.
 
 get_all_cameras() ->
 	% Voer een SELECT query uit met een wildcard
