@@ -53,12 +53,30 @@ content_types_provided(Req, State) ->
 return_json(Req, State) ->
 	% Verkrijg alle camera info's uit de database en zet ze om naar JSON formaat
 	Message = lists:foldl(fun(_Camera = #occupancy_camera_entry{name = Name, vps_ip_address = VpsIp, cam_ip_address = CamIp}, List) ->
+
+		% Vraag de camera status op bij het cameraproces
+		CameraProcess = {global, occupancy_camera:process_name(Name)},
+		CameraState = try
+		    case gen_server:call(CameraProcess, {is_online}) of
+				{noproc, _} ->
+					false;
+				ProcessState ->
+					ProcessState
+			end
+		catch
+		    _:_  ->
+				false
+		end,
+
+		% Maak een JSON object van al deze data
 		CameraJson = {[
 			{name, list_to_binary(Name)},
 			{vps_ip, list_to_binary(VpsIp)},
-			{cam_ip, list_to_binary(CamIp)}
+			{cam_ip, list_to_binary(CamIp)},
+			{is_online, CameraState}
 		]},
 
+		% Append het JSON object wat we net gemaakt hebben aan de List
 		[CameraJson|List]
 	end, [], occupancy_database:get_all_cameras()),
 

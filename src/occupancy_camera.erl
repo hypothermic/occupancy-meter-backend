@@ -8,10 +8,12 @@
     handle_cast/2,
     handle_info/2,
     terminate/2,
-	code_change/3
+	code_change/3,
+	process_name/1
 ]).
 
 -define(SERVER, ?MODULE).
+-define(CAMERA_PROCESS_PREFIX, "__occupancy_camera_process_").
 
 -include("occupancy_database.hrl").
 
@@ -21,8 +23,11 @@
 	remaining	= <<>>	:: binary()
 }).
 
-start_link(#occupancy_camera_entry{} = CameraEntry) ->
-	gen_server:start_link(?MODULE, [CameraEntry], []).
+process_name(CameraName) ->
+	list_to_atom(?CAMERA_PROCESS_PREFIX ++ CameraName).
+
+start_link(#occupancy_camera_entry{name = CameraName} = CameraEntry) ->
+	gen_server:start_link({global, process_name(CameraName)}, ?MODULE, [CameraEntry], []).
 
 init([CameraEntry = #occupancy_camera_entry{vps_ip_address = VpsIp, cam_ip_address = CamIp}]) ->
 
@@ -38,6 +43,9 @@ init([CameraEntry = #occupancy_camera_entry{vps_ip_address = VpsIp, cam_ip_addre
 		>>),
 
 	{ok, #occupancy_camera_state{camera_entry = CameraEntry, socket = Socket}}.
+
+handle_call({is_online}, _From, State = #occupancy_camera_state{}) ->
+	{reply, true, State};
 
 handle_call(_Request, _From, State = #occupancy_camera_state{}) ->
 	{reply, ok, State}.

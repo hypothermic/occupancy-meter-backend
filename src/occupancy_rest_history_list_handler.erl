@@ -51,14 +51,39 @@ content_types_provided(Req, State) ->
 % -----------------------------------------------------------------------------
 
 return_json(Req, State) ->
+	CameraName = binary_to_list(cowboy_req:binding(camera, Req)),
+	Options = [{binary_to_existing_atom(K, latin1), V} || {K, V} <- cowboy_req:parse_qs(Req)],
+
+	PaginationOffset = binary_to_integer(proplists:get_value(amount, Options)),
+	PaginationAmount = binary_to_integer(proplists:get_value(offset, Options)),
+
 	% Verkrijg alle history entries uit de database en zet ze om naar JSON formaat
-	Message = lists:foldl(fun(_Point = #occupancy_history_entry{key = Key, people_amount = PeopleAmount}, List) ->
+	HistoryListJson = lists:foldl(fun(_Point = #occupancy_history_entry{key = Key, people_amount = PeopleAmount}, List) ->
 		PointJson = {[
-			{time,   Key#occupancy_history_key.timestamp},
+			{time,   Key#occupancy_history_key.timestamp / 1000000},
 			{amount, PeopleAmount}
 		]},
 
 		[PointJson|List]
-	end, [], occupancy_database:get_history_for_camera(binary_to_list(cowboy_req:binding(camera, Req)))),
+	end, [], occupancy_database:get_history_for_camera(CameraName, {PaginationOffset, PaginationAmount})),
+
+	% Vraag de camera status op bij het cameraproces
+	CameraProcess = {global, occupancy_camera:process_name(CameraName)},
+	CameraState = try
+		case gen_server:call(CameraProcess, {is_online}) of
+			{noproc, _} ->
+				offline;
+			ProcessState ->
+				ProcessState
+		end
+	catch
+		_:_  ->
+			false
+	end,
+
+	Message = {[
+		{status, CameraState},
+		{history, HistoryListJson}
+	]},
 
 	{jiffy:encode(Message), Req, State}.
