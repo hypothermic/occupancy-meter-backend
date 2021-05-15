@@ -86,4 +86,4 @@ return_json(Req, State) ->
 		{history, HistoryListJson}
 	]},
 
-	{jiffy:encode(Message), Req, State}.
+	{jsone:encode(Message), Req, State}.

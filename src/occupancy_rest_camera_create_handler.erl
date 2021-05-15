@@ -68,10 +68,10 @@ content_types_provided(Req, State) ->
 resource_exists(Req, State) ->
 	% Lees de data uit de POST request, converteer JSON naar een Erlang Map
 	{ok, Body, Req1} = cowboy_req:read_body(Req),
-	Decoded = jiffy:decode(Body, [return_maps, dedupe_keys]),
+	Decoded = jsone:decode(Body, [{object_format, proplist}]),
 
 	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
-	Name = maps:get(<<"name">>, Decoded),
+	Name = proplists:get_value(<<"name">>, Decoded),
 
 	% Check in database of camera met de naam 'Name' bestaat.
 	case occupancy_database:camera_exists(binary_to_list(Name)) of
@@ -93,9 +93,9 @@ resource_exists(Req, State) ->
 
 accept_json(Req, Decoded) ->
 	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
-	Name = maps:get(<<"name">>, Decoded),
-	VpsIp = maps:get(<<"vps_ip">>, Decoded),
-	CamIp = maps:get(<<"cam_ip">>, Decoded),
+	Name = proplists:get_value(<<"name">>, Decoded),
+	VpsIp = proplists:get_value(<<"vps_ip">>, Decoded),
+	CamIp = proplists:get_value(<<"cam_ip">>, Decoded),
 
 	% Maak een database entry van de bovenstaande variabelen
 	Entry = #occupancy_camera_entry{

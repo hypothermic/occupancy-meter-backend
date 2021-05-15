@@ -80,4 +80,4 @@ return_json(Req, State) ->
 		[CameraJson|List]
 	end, [], occupancy_database:get_all_cameras()),
 
-	{jiffy:encode(Message), Req, State}.
+	{jsone:encode(Message), Req, State}.
