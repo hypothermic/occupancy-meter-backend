@@ -5,6 +5,7 @@
 
 	get_all_cameras/0,
 	create_camera/1,
+	delete_camera/1,
 	camera_exists/1,
 
 	get_all_histories/0,
@@ -127,6 +128,13 @@ get_history_for_camera(Camera, {ResultAmount, ResultOffset}) ->
 
 create_camera(CameraEntry = #occupancy_camera_entry{}) ->
 	Query = fun() -> mnesia:write(CameraEntry) end,
+
+	{atomic, ok} = mnesia:transaction(Query),
+
+	ok.
+
+delete_camera(CameraName) ->
+	Query = fun() -> mnesia:delete(occupancy_camera_entry, CameraName, write) end,
 
 	{atomic, ok} = mnesia:transaction(Query),
 
