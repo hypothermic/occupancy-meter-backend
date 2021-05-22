@@ -5,11 +5,8 @@
 -export([
 	init/2,
 	allowed_methods/2,
-	content_types_accepted/2,
-	content_types_provided/2,
 	resource_exists/2,
-
-	accept_json/2
+	delete_resource/2
 ]).
 
 -include("occupancy_database.hrl").
@@ -31,33 +28,7 @@ init(Req, State) ->
 % -----------------------------------------------------------------------------
 
 allowed_methods(Req, State) ->
-	{[<<"POST">>], Req, State}.
-
-
-% -----------------------------------------------------------------------------
-% content_types_provided functie
-%
-% 	Hierin geven we mee welke functies welke HTTP content types accepteren
-% 	Bijvoorbeeld, accept_json accepteert application/json content type
-% -----------------------------------------------------------------------------
-
-content_types_accepted(Req, State) ->
-	{[
-		{{<<"application">>, <<"json">>, []}, accept_json}
-	], Req, State}.
-
-% -----------------------------------------------------------------------------
-% content_types_provided functie
-%
-% 	Hierin geven we mee welke functies welke HTTP content types accepteren
-% 	Bijvoorbeeld, accept_json returnt application/json content type
-% -----------------------------------------------------------------------------
-
-content_types_provided(Req, State) ->
-	{[
-		{{<<"application">>, <<"json">>, []}, accept_json}
-	], Req, State}.
-
+	{[<<"DELETE">>], Req, State}.
 
 % -----------------------------------------------------------------------------
 % resource_exists
@@ -65,38 +36,38 @@ content_types_provided(Req, State) ->
 % 	TODO uitleg wat deze functie doet
 % -----------------------------------------------------------------------------
 
-resource_exists(Req, State) ->
-	% Lees de data uit de POST request, converteer JSON naar een Erlang Map
-	{ok, Body, Req1} = cowboy_req:read_body(Req),
-	Decoded = jsone:decode(Body, [{object_format, proplist}]),
-
+resource_exists(Req, _State) ->
 	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
-	Name = proplists:get_value(<<"name">>, Decoded),
+	CameraName = binary_to_list(cowboy_req:binding(name, Req)),
 
 	% Check in database of camera met de naam 'Name' bestaat.
-	case occupancy_database:camera_exists(binary_to_list(Name)) of
+	case occupancy_database:camera_exists(CameraName) of
 		% Bestaat niet. Stoppen.
 		false ->
-			Req2 = cowboy_req:reply(409, Req1),
-			{stop, Req2, Decoded};
+			Req1 = cowboy_req:reply(409, Req),
+			{stop, Req1, CameraName};
 		% Bestaat, ga door met accept_json
 		true ->
-			{true, Req1, Decoded}
+			{true, Req, CameraName}
 	end.
 
-
 % -----------------------------------------------------------------------------
-% accept_json
+% delete_resource
 %
-% 	Geeft de lijst met camera's terug in JSON-formaat
+% 	TODO uitleg wat deze functie doet
 % -----------------------------------------------------------------------------
 
-accept_json(Req, Decoded) ->
-	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
-	Name = proplists:get_value(<<"name">>, Decoded),
+delete_resource(Req, CameraName) ->
+	% Stop de camera indien hij nog bezig is
+	ok = try
+		gen_server:stop({global, occupancy_camera:process_name(CameraName)})
+	catch
+		_:_ ->
+			ok
+	end,
 
-	% Verwijdert de camera. 
-	occupancy_database:delete_camera(binary_to_list(Name)),
+	% Verwijder de camera.
+	occupancy_database:delete_camera(CameraName),
 
 	% Return success=true
-	{{true, "/camera/" ++ Name}, Req, undefined}.
+	{{true}, Req, undefined}.

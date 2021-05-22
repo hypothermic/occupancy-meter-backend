@@ -56,18 +56,27 @@ handle_cast(_Request, State = #occupancy_camera_state{}) ->
 handle_info(Info, State = #occupancy_camera_state{}) ->
 	case Info of
 		{tcp_closed, _} ->
-			{stop, State};
-
+			{stop, shutdown, State};
 		{tcp, _, Data} when is_binary(Data) ->
 			NewState = handle_data(Data, State),
 			{noreply, NewState};
+
 
 		(_) ->
 			{noreply, State}
 	end.
 
-terminate(_Reason, _State = #occupancy_camera_state{}) ->
-	ok.
+terminate(_Reason, _State = #occupancy_camera_state{socket = Socket}) ->
+	% Probeer nog een terminate bericht te sturen naar de VPS
+	try
+	    gen_tcp:send(Socket,
+			<<
+				2:8/unsigned-integer
+			>>)
+	catch
+	    _:_  ->
+			ok
+	end.
 
 code_change(_OldVsn, State = #occupancy_camera_state{}, _Extra) ->
 	{ok, State}.
@@ -76,6 +85,8 @@ handle_data(Data, State = #occupancy_camera_state{camera_entry = CameraEntry, re
 	<<CommandId:8/unsigned-integer, Rest/binary>> = <<RemainingData/binary, Data/binary>>,
 
 	case CommandId of
+		3 ->
+			gen_server:stop(self());
 		4 ->
 			% Lees het getal uit de data
 			<<PeopleAmount:8/unsigned-integer, Rest2/binary>> = Rest,
