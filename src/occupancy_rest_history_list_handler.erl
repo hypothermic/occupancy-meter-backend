@@ -70,7 +70,7 @@ return_json(Req, State) ->
 	% Vraag de camera status op bij het cameraproces
 	CameraProcess = {global, occupancy_camera:process_name(CameraName)},
 	CameraState = try
-		case gen_server:call(CameraProcess, {is_online}) of
+		case gen_server:call(CameraProcess, {is_online}, 100) of
 			{noproc, _} ->
 				offline;
 			ProcessState ->
