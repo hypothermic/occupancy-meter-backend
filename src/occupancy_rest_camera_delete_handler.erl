@@ -37,7 +37,7 @@ allowed_methods(Req, State) ->
 % -----------------------------------------------------------------------------
 
 resource_exists(Req, _State) ->
-	% Haal de variabelen uit de map zodat we ze makkelijk kunnen gebruiken
+	% Haal de naam van de camera uit de REST-URL
 	CameraName = binary_to_list(cowboy_req:binding(name, Req)),
 
 	% Check in database of camera met de naam 'Name' bestaat.
@@ -68,6 +68,12 @@ delete_resource(Req, CameraName) ->
 
 	% Verwijder de camera.
 	occupancy_database:delete_camera(CameraName),
+
+	lists:foreach(fun(Entry) ->
+		{atomic, ok} = mnesia:transaction(fun () ->
+			mnesia:delete_object(Entry)
+		end)
+	end, occupancy_database:get_history_for_camera(CameraName, {1000000, 0})),
 
 	% Return success=true
 	{{true}, Req, undefined}.

@@ -6,6 +6,7 @@
 	get_all_cameras/0,
 	create_camera/1,
 	delete_camera/1,
+	get_camera/1,
 	camera_exists/1,
 
 	get_all_histories/0,
@@ -139,6 +140,21 @@ delete_camera(CameraName) ->
 	{atomic, ok} = mnesia:transaction(Query),
 
 	ok.
+
+get_camera(CameraName) ->
+	% Als er een record met de camera naam CameraName bestaat, return deze record
+	Query = fun() ->
+		case mnesia:read(occupancy_camera_entry, CameraName) of
+			[#occupancy_camera_entry{} = CameraEntry] ->
+				CameraEntry;
+			[] ->
+				undefined
+		end
+	end,
+
+	{atomic, Exists} = mnesia:transaction(Query),
+
+	Exists.
 
 camera_exists(CameraName) ->
 	% Als er een record met de camera naam CameraName bestaat, return true

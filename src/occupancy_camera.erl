@@ -31,18 +31,23 @@ start_link(#occupancy_camera_entry{name = CameraName} = CameraEntry) ->
 
 init([CameraEntry = #occupancy_camera_entry{vps_ip_address = VpsIp, cam_ip_address = CamIp}]) ->
 
-    % Verbind met de VPS via een socket. Het python script op de VPS accept de socket.
-    {ok, Socket} = gen_tcp:connect(VpsIp, 40001, [binary, {packet, 0}]),
+	try
+    	% Verbind met de VPS via een socket. Het python script op de VPS accept de socket.
+    	{ok, Socket} = gen_tcp:connect(VpsIp, 40001, [binary, {packet, 0}]),
 
-	% Stuur een packet1, met het IP-adres van de camera
-    ok = gen_tcp:send(Socket,
-		<<
-			1:8/unsigned-integer,
-			(length(CamIp))/unsigned-integer,
-			(list_to_binary(CamIp))/binary
-		>>),
+		% Stuur een packet1, met het IP-adres van de camera
+    	ok = gen_tcp:send(Socket,
+			<<
+				1:8/unsigned-integer,
+				(length(CamIp))/unsigned-integer,
+				(list_to_binary(CamIp))/binary
+			>>),
 
-	{ok, #occupancy_camera_state{camera_entry = CameraEntry, socket = Socket}}.
+		{ok, #occupancy_camera_state{camera_entry = CameraEntry, socket = Socket}}
+	catch
+		_:_ ->
+			{stop, normal, undefined}
+	end.
 
 handle_call({is_online}, _From, State = #occupancy_camera_state{}) ->
 	{reply, true, State};
