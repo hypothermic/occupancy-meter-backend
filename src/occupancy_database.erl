@@ -75,6 +75,12 @@ create_cameras_table() ->
 		{disc_copies, [node()]}
 	]).
 
+% -----------------------------------------------------------------------------
+% create_history_table
+%
+% 	Functie die er voor zorgt dat het history tabel aangemaakt wordt
+% -----------------------------------------------------------------------------
+
 create_history_table() ->
 	mnesia:create_table(occupancy_history_entry, [
 		{type, set},
@@ -83,6 +89,11 @@ create_history_table() ->
 		{disc_copies, [node()]}
 	]).
 
+% -----------------------------------------------------------------------------
+% get_all_cameras
+%
+% 	Functie die een lijst met alle camera's returnt
+% -----------------------------------------------------------------------------
 
 get_all_cameras() ->
 	% Voer een SELECT query uit met een wildcard
@@ -92,12 +103,24 @@ get_all_cameras() ->
 
 	Cameras.
 
+% -----------------------------------------------------------------------------
+% get_all_histories
+%
+% 	Functie die alle history entries van alle camera's returnt
+% -----------------------------------------------------------------------------
+
 get_all_histories() ->
 	Query = fun() -> mnesia:select(occupancy_history_entry, [{'_',[],['$_']}]) end,
 
 	{atomic, Histories} = mnesia:transaction(Query),
 
 	Histories.
+
+% -----------------------------------------------------------------------------
+% get_history_for_camera
+%
+% 	Functie die alle history punten voor een camera returnt
+% -----------------------------------------------------------------------------
 
 get_history_for_camera(Camera, {ResultAmount, ResultOffset}) ->
 	% Patroon voor welke eisen we stellen aan de return records (WHERE commando in SQL)
@@ -127,6 +150,12 @@ get_history_for_camera(Camera, {ResultAmount, ResultOffset}) ->
 
 	History.
 
+% -----------------------------------------------------------------------------
+% create_camera
+%
+% 	Functie die een nieuwe camera entry in de database aanmaakt
+% -----------------------------------------------------------------------------
+
 create_camera(CameraEntry = #occupancy_camera_entry{}) ->
 	Query = fun() -> mnesia:write(CameraEntry) end,
 
@@ -134,12 +163,24 @@ create_camera(CameraEntry = #occupancy_camera_entry{}) ->
 
 	ok.
 
+% -----------------------------------------------------------------------------
+% delete_camera
+%
+% 	Functie die een camera uit de database verwijdert
+% -----------------------------------------------------------------------------
+
 delete_camera(CameraName) ->
 	Query = fun() -> mnesia:delete(occupancy_camera_entry, CameraName, write) end,
 
 	{atomic, ok} = mnesia:transaction(Query),
 
 	ok.
+
+% -----------------------------------------------------------------------------
+% get_camera
+%
+% 	Functie die camera info uit de database verkrijgt
+% -----------------------------------------------------------------------------
 
 get_camera(CameraName) ->
 	% Als er een record met de camera naam CameraName bestaat, return deze record
@@ -155,6 +196,12 @@ get_camera(CameraName) ->
 	{atomic, Exists} = mnesia:transaction(Query),
 
 	Exists.
+
+% -----------------------------------------------------------------------------
+% camera_exists
+%
+% 	Functie die controleert of er een camera bestaat met deze naam in de database
+% -----------------------------------------------------------------------------
 
 camera_exists(CameraName) ->
 	% Als er een record met de camera naam CameraName bestaat, return true

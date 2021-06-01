@@ -22,15 +22,18 @@
 % -----------------------------------------------------------------------------
 
 start(_StartType, _StartArgs) ->
+    % Configureer mnesia en maak de database aan als hij nog niet bestaat.
     logger:debug("Mnesia aan het configureren...."),
     occupancy_database:setup(),
     application:ensure_started(mnesia),
 
+    % Start een cameraproces voor alle cameras die in de database staan
     logger:debug("Camera's aanmaken...."),
     lists:foreach(fun(Camera) ->
         occupancy_camera:start_link(Camera)
     end, occupancy_database:get_all_cameras()),
 
+    % Start de REST API
     logger:debug("REST API starten...."),
     application:ensure_all_started([cowboy, ranch, cowlib]),
 
@@ -54,6 +57,7 @@ start(_StartType, _StartArgs) ->
 
     logger:debug("OK"),
 
+    % Start de supervisor
     occupancy_sup:start_link().
 
 
