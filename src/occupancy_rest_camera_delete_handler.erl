@@ -14,7 +14,7 @@
 % -----------------------------------------------------------------------------
 % init functie
 %
-%	TODO uitleg wat deze functie doet
+%	Initialiseert de cowboy rest API
 % -----------------------------------------------------------------------------
 
 init(Req, State) ->
@@ -24,7 +24,7 @@ init(Req, State) ->
 % -----------------------------------------------------------------------------
 % allowed_methods functie
 %
-%	TODO uitleg wat deze functie doet
+%	Laat alleen DELETE berichten door
 % -----------------------------------------------------------------------------
 
 allowed_methods(Req, State) ->
@@ -33,7 +33,7 @@ allowed_methods(Req, State) ->
 % -----------------------------------------------------------------------------
 % resource_exists
 %
-% 	TODO uitleg wat deze functie doet
+% 	Kijkt of het object al bestaat
 % -----------------------------------------------------------------------------
 
 resource_exists(Req, _State) ->
@@ -54,7 +54,7 @@ resource_exists(Req, _State) ->
 % -----------------------------------------------------------------------------
 % delete_resource
 %
-% 	TODO uitleg wat deze functie doet
+% 	Verwijdert de camera uit het database.
 % -----------------------------------------------------------------------------
 
 delete_resource(Req, CameraName) ->

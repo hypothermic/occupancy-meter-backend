@@ -17,7 +17,7 @@
 % -----------------------------------------------------------------------------
 % init functie
 %
-%	TODO uitleg wat deze functie doet
+%	Initialiseert de cowboy rest API
 % -----------------------------------------------------------------------------
 
 init(Req, State) ->
@@ -27,7 +27,7 @@ init(Req, State) ->
 % -----------------------------------------------------------------------------
 % allowed_methods functie
 %
-%	TODO uitleg wat deze functie doet
+%	Laat alleen POST berichten door
 % -----------------------------------------------------------------------------
 
 allowed_methods(Req, State) ->
@@ -62,7 +62,7 @@ content_types_provided(Req, State) ->
 % -----------------------------------------------------------------------------
 % resource_exists
 %
-% 	TODO uitleg wat deze functie doet
+% 	Kijkt of het object al bestaat
 % -----------------------------------------------------------------------------
 
 resource_exists(Req, State) ->
@@ -75,7 +75,7 @@ resource_exists(Req, State) ->
 
 	% Check in database of camera met de naam 'Name' bestaat.
 	case occupancy_database:camera_exists(binary_to_list(Name)) of
-		% Bestaat al. kap ermee.
+		% Bestaat al. Stop.
 		true ->
 			Req2 = cowboy_req:reply(409, Req1),
 			{stop, Req2, Decoded};

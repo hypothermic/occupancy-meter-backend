@@ -16,7 +16,7 @@
 % -----------------------------------------------------------------------------
 % init functie
 %
-%	TODO uitleg wat deze functie doet
+%	Initialiseert de cowboy rest API
 % -----------------------------------------------------------------------------
 
 init(Req, State) ->
@@ -26,7 +26,7 @@ init(Req, State) ->
 % -----------------------------------------------------------------------------
 % allowed_methods functie
 %
-%	TODO uitleg wat deze functie doet
+%	Laat alleen POST berichten door
 % -----------------------------------------------------------------------------
 
 allowed_methods(Req, State) ->
